@@ -1,0 +1,142 @@
+version: "3.9"
+
+networks:
+  microshop-net:
+    driver: bridge
+
+volumes:
+  db-data:
+  redis-data:
+  rabbitmq-data:
+  etcd-data:
+  minio-data:
+
+services:
+
+  # ---------------- AUTH SERVICE ----------------
+  auth-service:
+    build: ./auth-service-go
+    container_name: auth-service
+    env_file: .env
+    networks:    
+      - microshop-net
+    depends_on:
+      - redis
+      - etcd
+
+  # ---------------- BACKEND SERVICE ----------------
+  backend-service:
+    build: ./backend-java
+    container_name: backend-service
+    env_file: .env
+    environment:
+      - MINIO_ENDPOINT=http://minio:9000
+      - MINIO_ACCESS_KEY=minioadmin
+      - MINIO_SECRET_KEY=minio123
+      - shop.minio.endpoint=http://minio:9000
+      - shop.minio.access-key=minioadmin
+      - shop.minio.secret-key=minio123
+      - shop.minio.region=us-east-1
+    networks:
+      - microshop-net
+    depends_on:
+      - postgres
+      - redis
+      - rabbitmq
+      - minio
+
+  # ---------------- ORDER WORKER ----------------
+  order-worker:
+    build: ./order-worker-python
+    container_name: order-worker
+    env_file: .env
+    networks:
+      - microshop-net
+    depends_on:
+      - backend-service
+      - postgres
+      - rabbitmq
+
+  # ---------------- FRONTEND ----------------
+  frontend:
+    build: ./frontend-react
+    container_name: frontend
+    networks:
+      - microshop-net
+    depends_on:
+      - backend-service
+      - auth-service
+
+  # ---------------- NGINX GATEWAY ----------------
+  nginx-gateway:
+    build: ./nginx-gateway
+    container_name: nginx-gateway
+    ports:
+      - "3000:80"
+    networks:
+      - microshop-net
+    depends_on:
+      - frontend
+      - backend-service
+      - auth-service
+      - minio
+
+  # ---------------- POSTGRES ----------------
+  postgres:
+    image: postgres:16-alpine
+    container_name: postgres
+    restart: always
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    networks:
+      - microshop-net
+
+  # ---------------- REDIS ----------------
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    restart: always
+    volumes:
+      - redis-data:/data
+    networks:
+      - microshop-net
+
+  # ---------------- RABBITMQ ----------------
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    networks:
+      - microshop-net
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+
+  # ---------------- ETCD ----------------
+  etcd:
+    image: quay.io/coreos/etcd:v3.5.9
+    container_name: etcd
+    environment:
+      ETCD_LISTEN_CLIENT_URLS: http://0.0.0.0:2379
+      ETCD_ADVERTISE_CLIENT_URLS: http://etcd:2379
+    volumes:
+      - etcd-data:/etcd-data
+    networks:
+      - microshop-net
+
+  # ---------------- MINIO ----------------
+  minio:
+    image: minio/minio
+    container_name: minio
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      MINIO_REGION: us-east-1
+      MINIO_BROWSER: on
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio-data:/data
+    networks:
+      - microshop-net
