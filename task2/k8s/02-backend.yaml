@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hello-backend
+  namespace: task2
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hello-backend
+  template:
+    metadata:
+      labels:
+        app: hello-backend
+    spec:
+      containers:
+        - name: backend
+          image: docker.io/moz1h1gh/hellobackend:1.0
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          env:
+            - name: NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: hello-app-config
+                  key: NAME
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 20
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hello-backend
+  namespace: task2
+spec:
+  selector:
+    app: hello-backend
+  ports:
+    - port: 8080
+      targetPort: 8080

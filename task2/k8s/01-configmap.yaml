@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: hello-app-config
+  namespace: task2
+data:
+  NAME: Lev
+  API_BASE_URL: /api
