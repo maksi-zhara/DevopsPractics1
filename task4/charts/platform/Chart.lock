@@ -1,0 +1,15 @@
+dependencies:
+- name: cert-manager
+  repository: oci://quay.io/jetstack/charts
+  version: v1.20.2
+- name: cloudnative-pg
+  repository: https://cloudnative-pg.github.io/charts
+  version: 0.28.0
+- name: nginx-gateway-fabric
+  repository: oci://ghcr.io/nginx/charts
+  version: 2.6.2
+- name: gateway-api-crds
+  repository: file://../gateway-api-crds
+  version: 0.1.0
+digest: sha256:494fd836b131d79b6abe98408ad5ddaadffa479f1ee8a3bf3ba1cc710686ebce
+generated: "2026-05-26T05:11:22.060968781+03:00"

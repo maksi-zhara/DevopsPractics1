@@ -1,0 +1,6 @@
+apiVersion: v2
+name: gateway-api-crds
+description: Helm chart that installs official Gateway API standard CRDs
+type: application
+version: 0.1.0
+appVersion: "v1.4.1"

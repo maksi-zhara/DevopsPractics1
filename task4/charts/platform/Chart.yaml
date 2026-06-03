@@ -1,0 +1,26 @@
+apiVersion: v2
+name: platform
+description: Helm chart for cluster-level platform components used by task4
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+dependencies:
+  - name: cert-manager
+    alias: certmanager
+    repository: oci://quay.io/jetstack/charts
+    version: v1.20.2
+    condition: certmanager.enabled
+  - name: cloudnative-pg
+    alias: cloudnativepg
+    repository: https://cloudnative-pg.github.io/charts
+    version: 0.28.0
+    condition: cloudnativepg.enabled
+  - name: nginx-gateway-fabric
+    alias: nginxgatewayfabric
+    repository: oci://ghcr.io/nginx/charts
+    version: 2.6.2
+    condition: nginxgatewayfabric.enabled
+  - name: gateway-api-crds
+    repository: file://../gateway-api-crds
+    version: 0.1.0
+    condition: gatewayApi.enabled

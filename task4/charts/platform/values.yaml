@@ -1,0 +1,27 @@
+certmanager:
+  enabled: true
+  crds:
+    enabled: true
+  prometheus:
+    enabled: false
+
+cloudnativepg:
+  enabled: true
+  nameOverride: cloudnative-pg
+  config:
+    create: true
+    name: cnpg-controller-manager-config
+    data: {}
+
+nginxgatewayfabric:
+  enabled: true
+  nginx:
+    service:
+      type: NodePort
+  nginxGateway:
+    watchNamespaces:
+      - task4
+
+gatewayApi:
+  enabled: true
+  standardChannelVersion: v1.4.1

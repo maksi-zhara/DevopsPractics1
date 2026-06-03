@@ -4,5 +4,5 @@ metadata:
   name: hello-app-config
   namespace: task2
 data:
-  NAME: Lev
+  NAME: Maksim
   API_BASE_URL: /api

@@ -1,0 +1,82 @@
+nameOverride: ""
+fullnameOverride: ""
+
+imagePullSecrets: []
+
+backend:
+  replicaCount: 1
+  image:
+    repository: docker.io/moz1h1gh/task4-backend
+    tag: latest
+    pullPolicy: Always
+  service:
+    port: 8080
+  probes:
+    startup:
+      failureThreshold: 30
+      periodSeconds: 5
+      timeoutSeconds: 30
+    readiness:
+      initialDelaySeconds: 5
+      periodSeconds: 10
+      timeoutSeconds: 5
+    liveness:
+      initialDelaySeconds: 10
+      periodSeconds: 20
+  postgres:
+    connectRetries: 2
+    connectDelay: 1
+
+frontend:
+  replicaCount: 1
+  image:
+    repository: docker.io/moz1h1gh/task4-frontend
+    tag: latest
+    pullPolicy: Always
+  service:
+    port: 80
+  apiBaseUrl: /api
+  probes:
+    readiness:
+      initialDelaySeconds: 5
+      periodSeconds: 10
+    liveness:
+      initialDelaySeconds: 10
+      periodSeconds: 20
+
+cnpg:
+  cluster:
+    name: task4-db
+    instances: 1
+    storage:
+      size: 1Gi
+      storageClass: ""
+    imageName: ""
+  database: task4db
+  user: task4user
+  password: task4password
+  managedServices:
+    disableReadOnlyServices: true
+
+gateway:
+  gatewayClassName: nginx
+  hostname: task4.local
+  tls:
+    enabled: true
+    secretName: ""
+  httpRedirectToHttps: true
+
+certManager:
+  issuer:
+    selfSignedName: task4-selfsigned
+    caName: task4-ca
+  rootCA:
+    secretName: task4-root-ca
+    commonName: task4-root-ca
+    subject:
+      organizations:
+        - task4
+  certificate:
+    secretName: task4-gateway-tls
+    duration: 2160h
+    renewBefore: 360h

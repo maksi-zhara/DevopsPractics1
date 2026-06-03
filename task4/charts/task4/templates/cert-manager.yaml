@@ -1,0 +1,63 @@
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: {{ .Values.certManager.issuer.selfSignedName }}
+  labels:
+    {{- include "task4.labels" . | nindent 4 }}
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ .Values.certManager.rootCA.secretName }}
+  labels:
+    {{- include "task4.labels" . | nindent 4 }}
+spec:
+  isCA: true
+  commonName: {{ .Values.certManager.rootCA.commonName | quote }}
+  secretName: {{ .Values.certManager.rootCA.secretName }}
+  subject:
+    organizations:
+      {{- toYaml .Values.certManager.rootCA.subject.organizations | nindent 6 }}
+  privateKey:
+    algorithm: RSA
+    size: 2048
+  issuerRef:
+    name: {{ .Values.certManager.issuer.selfSignedName }}
+    kind: Issuer
+    group: cert-manager.io
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: {{ .Values.certManager.issuer.caName }}
+  labels:
+    {{- include "task4.labels" . | nindent 4 }}
+spec:
+  ca:
+    secretName: {{ .Values.certManager.rootCA.secretName }}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ include "task4.gatewayTlsSecretName" . }}
+  labels:
+    {{- include "task4.labels" . | nindent 4 }}
+spec:
+  secretName: {{ include "task4.gatewayTlsSecretName" . }}
+  commonName: {{ .Values.gateway.hostname | quote }}
+  dnsNames:
+    - {{ .Values.gateway.hostname | quote }}
+  duration: {{ .Values.certManager.certificate.duration }}
+  renewBefore: {{ .Values.certManager.certificate.renewBefore }}
+  subject:
+    organizations:
+      - task4
+  privateKey:
+    algorithm: RSA
+    size: 2048
+  issuerRef:
+    name: {{ .Values.certManager.issuer.caName }}
+    kind: Issuer
+    group: cert-manager.io

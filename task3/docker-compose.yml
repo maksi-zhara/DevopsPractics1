@@ -1,0 +1,60 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: task3-postgres
+    hostname: postgres
+    environment:
+      POSTGRES_DB: task3db
+      POSTGRES_USER: task3user
+      POSTGRES_PASSWORD: task3password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U task3user -d task3db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      default:
+        aliases:
+          - postgres
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: task3-backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: task3db
+      POSTGRES_USER: task3user
+      POSTGRES_PASSWORD: task3password
+      POSTGRES_CONNECT_RETRIES: 20
+      POSTGRES_CONNECT_DELAY: 2
+    ports:
+      - "8080:8080"
+    networks:
+      default: null
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: task3-frontend
+    depends_on:
+      - backend
+    environment:
+      API_BASE_URL: http://localhost:8080/api
+    ports:
+      - "8081:80"
+    networks:
+      default: null
+
+volumes:
+  postgres_data:

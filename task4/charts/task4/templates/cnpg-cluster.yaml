@@ -1,0 +1,29 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: {{ include "task4.cnpgClusterName" . }}
+  labels:
+    {{- include "task4.labels" . | nindent 4 }}
+spec:
+  instances: {{ .Values.cnpg.cluster.instances }}
+  {{- with .Values.cnpg.cluster.imageName }}
+  imageName: {{ . | quote }}
+  {{- end }}
+  bootstrap:
+    initdb:
+      database: {{ .Values.cnpg.database | quote }}
+      owner: {{ .Values.cnpg.user | quote }}
+      secret:
+        name: {{ include "task4.cnpgAppSecretName" . }}
+  storage:
+    size: {{ .Values.cnpg.cluster.storage.size | quote }}
+    {{- if .Values.cnpg.cluster.storage.storageClass }}
+    storageClass: {{ .Values.cnpg.cluster.storage.storageClass | quote }}
+    {{- end }}
+  {{- if .Values.cnpg.managedServices.disableReadOnlyServices }}
+  managed:
+    services:
+      disabledDefaultServices:
+        - ro
+        - r
+  {{- end }}

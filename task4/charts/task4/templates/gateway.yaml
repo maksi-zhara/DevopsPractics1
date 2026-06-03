@@ -1,0 +1,84 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: {{ include "task4.gatewayName" . }}
+  labels:
+    {{- include "task4.labels" . | nindent 4 }}
+spec:
+  gatewayClassName: {{ .Values.gateway.gatewayClassName }}
+  listeners:
+    - name: http
+      protocol: HTTP
+      port: 80
+      hostname: {{ .Values.gateway.hostname | quote }}
+      allowedRoutes:
+        namespaces:
+          from: Same
+    {{- if .Values.gateway.tls.enabled }}
+    - name: https
+      protocol: HTTPS
+      port: 443
+      hostname: {{ .Values.gateway.hostname | quote }}
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - kind: Secret
+            name: {{ include "task4.gatewayTlsSecretName" . }}
+      allowedRoutes:
+        namespaces:
+          from: Same
+    {{- end }}
+---
+{{- if .Values.gateway.httpRedirectToHttps }}
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: {{ include "task4.redirectRouteName" . }}
+  labels:
+    {{- include "task4.labels" . | nindent 4 }}
+spec:
+  hostnames:
+    - {{ .Values.gateway.hostname | quote }}
+  parentRefs:
+    - name: {{ include "task4.gatewayName" . }}
+      sectionName: http
+  rules:
+    - filters:
+        - type: RequestRedirect
+          requestRedirect:
+            scheme: https
+            statusCode: 301
+{{- end }}
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: {{ include "task4.routeName" . }}
+  labels:
+    {{- include "task4.labels" . | nindent 4 }}
+spec:
+  hostnames:
+    - {{ .Values.gateway.hostname | quote }}
+  parentRefs:
+    {{- if .Values.gateway.tls.enabled }}
+    - name: {{ include "task4.gatewayName" . }}
+      sectionName: https
+    {{- else }}
+    - name: {{ include "task4.gatewayName" . }}
+      sectionName: http
+    {{- end }}
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /api
+      backendRefs:
+        - name: {{ include "task4.backendName" . }}
+          port: {{ .Values.backend.service.port }}
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: {{ include "task4.frontendName" . }}
+          port: {{ .Values.frontend.service.port }}
