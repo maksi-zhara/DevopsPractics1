@@ -11,5 +11,5 @@ dependencies:
 - name: gateway-api-crds
   repository: file://../gateway-api-crds
   version: 0.1.0
-digest: sha256:494fd836b131d79b6abe98408ad5ddaadffa479f1ee8a3bf3ba1cc710686ebce
-generated: "2026-05-26T05:11:22.060968781+03:00"
+digest: sha256:550cddd3dc7dc029836b4a3bcbf320410a0127ae33705e86b4c51a4a1d4e91af
+generated: "2026-06-03T21:25:00.477189996+03:00"
